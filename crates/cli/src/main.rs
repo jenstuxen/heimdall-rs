@@ -138,7 +138,18 @@ async fn main() -> Result<()> {
                 .await
                 .map_err(|e| eyre!("failed to decompile bytecode: {}", e))?;
 
-            if cmd.output == "print" {
+            if cmd.output == "printjson" {
+                let mut output_str = String::new();
+                let abi_value = serde_json::to_value(&result.abi)?;
+                output_str.push_str(&format!("{{\"abi\":\n[{}]\n,", abi_value));
+
+                if let Some(source) = &result.source {
+                    let source_json = serde_json::to_value(source);
+                    output_str.push_str(&format!("\"source\":\n\n{}\n}}", source_json?));
+                }
+
+                println!("{}", &output_str);
+            } else if cmd.output == "print" {
                 let mut output_str = String::new();
                 output_str.push_str(&format!(
                     "ABI:\n\n[{}]\n",
