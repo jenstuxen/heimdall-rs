@@ -1,5 +1,6 @@
 [package]
 name = "heimdall-offline"
+build = "build.rs"
 description = "Network-silent offline bytecode decompiler powered by heimdall-rs"
 version.workspace = true
 edition.workspace = true

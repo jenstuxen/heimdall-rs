@@ -8,7 +8,7 @@ use heimdall_decompiler::{decompile, DecompilerArgs, DecompilerArgsBuilder, Hard
 use heimdall_disassembler::{disassemble, DisassemblerArgsBuilder};
 use serde::Serialize;
 
-const HEIMDALL_REVISION: &str = "9d8cd855609fa32306425a4184ff4e21f75a0d0e";
+const HEIMDALL_REVISION: &str = env!("HEIMDALL_GIT_REVISION");
 
 #[derive(Debug, Clone, Copy, ValueEnum)]
 enum SourceFormat {
