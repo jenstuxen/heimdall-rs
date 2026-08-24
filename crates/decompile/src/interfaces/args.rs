@@ -42,7 +42,7 @@ pub struct DecompilerArgs {
     #[clap(long = "include-yul")]
     pub include_yul: bool,
 
-    /// The output directory to write the output to or 'print' to print to the console
+    /// The output directory, 'print' for human-readable output, or 'printjson' for JSON
     #[clap(long = "output", short = 'o', default_value = "output", hide_default_value = true)]
     pub output: String,
 

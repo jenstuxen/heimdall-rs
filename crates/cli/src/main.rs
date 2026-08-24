@@ -17,9 +17,59 @@ use heimdall_common::utils::{
 };
 use heimdall_config::{config, Configuration};
 use heimdall_core::{
-    heimdall_cfg::cfg, heimdall_decoder::decode, heimdall_decompiler::decompile,
-    heimdall_disassembler::disassemble, heimdall_dump::dump, heimdall_inspect::inspect,
+    heimdall_cfg::cfg,
+    heimdall_decoder::decode,
+    heimdall_decompiler::{decompile, DecompileResult},
+    heimdall_disassembler::disassemble,
+    heimdall_dump::dump,
+    heimdall_inspect::inspect,
 };
+use serde_json::{json, Value};
+
+fn decompile_result_json(result: &DecompileResult) -> Value {
+    json!({
+        "abi": result.abi,
+        "abi_with_details": result.abi_with_details,
+        "source": result.source,
+    })
+}
+
+#[cfg(test)]
+mod tests {
+    use alloy_json_abi::JsonAbi;
+    use heimdall_core::heimdall_decompiler::DecompileResult;
+
+    use super::decompile_result_json;
+
+    #[test]
+    fn printjson_includes_source_when_present() {
+        let result = DecompileResult {
+            source: Some("contract Decompiled {}".to_string()),
+            abi: JsonAbi::default(),
+            abi_with_details: serde_json::json!([{"selector": "0x12345678"}]),
+        };
+
+        assert_eq!(
+            decompile_result_json(&result),
+            serde_json::json!({
+                "abi": [],
+                "abi_with_details": [{"selector": "0x12345678"}],
+                "source": "contract Decompiled {}",
+            })
+        );
+    }
+
+    #[test]
+    fn printjson_uses_null_when_source_is_absent() {
+        let result = DecompileResult {
+            source: None,
+            abi: JsonAbi::default(),
+            abi_with_details: serde_json::json!([]),
+        };
+
+        assert_eq!(decompile_result_json(&result)["source"], serde_json::Value::Null);
+    }
+}
 
 #[allow(clippy::large_stack_frames)]
 #[tokio::main]
@@ -109,7 +159,9 @@ async fn main() -> Result<()> {
                 .await
                 .map_err(|e| eyre!("failed to decompile bytecode: {}", e))?;
 
-            if cmd.output == "print" {
+            if cmd.output == "printjson" {
+                println!("{}", serde_json::to_string_pretty(&decompile_result_json(&result))?);
+            } else if cmd.output == "print" {
                 let mut output_str = String::new();
                 output_str
                     .push_str(&format!("ABI:\n\n{}\n", serde_json::to_string_pretty(&result.abi)?));
