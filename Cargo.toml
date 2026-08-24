@@ -11,6 +11,7 @@ members = [
     "crates/core",
     "crates/dump",
     "crates/cli",
+    "crates/offline",
     "crates/cfg",
     "crates/vm",
 ]
