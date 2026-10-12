@@ -1,5 +1,7 @@
 //! Network-silent command-line adapter for Heimdall's decompiler and disassembler.
 
+mod candidates;
+
 use std::{fs, io::Read, path::PathBuf, process::ExitCode, str::FromStr};
 
 use clap::{Parser, ValueEnum};
@@ -45,6 +47,11 @@ struct Args {
     /// Fixed hardfork used for opcode recognition. 'auto' is rejected offline.
     #[arg(long, default_value = "latest")]
     hardfork: String,
+
+    /// Optional local selector bank (JSON object mapping selector hex to signature arrays).
+    /// Adds candidate annotations only; it does not affect the generated source or ABI.
+    #[arg(long, value_name = "PATH")]
+    selector_bank: Option<PathBuf>,
 }
 
 #[derive(Debug, Serialize)]
@@ -60,6 +67,8 @@ struct Output {
     source: Option<String>,
     abi: serde_json::Value,
     abi_with_details: serde_json::Value,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    selector_candidates: Option<candidates::CandidateReport>,
     disassembly: String,
 }
 
@@ -193,6 +202,11 @@ async fn run() -> Result<()> {
         analyzed_bytes: (target.len() - 2) / 2,
         source: result.source,
         abi: serde_json::to_value(result.abi).wrap_err("failed to serialize Heimdall ABI")?,
+        selector_candidates: args
+            .selector_bank
+            .as_deref()
+            .map(|path| candidates::annotate(path, &result.abi_with_details))
+            .transpose()?,
         abi_with_details: result.abi_with_details,
         disassembly,
     };

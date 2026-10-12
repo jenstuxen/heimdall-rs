@@ -17,6 +17,7 @@ path = "src/main.rs"
 bench = false
 
 [dependencies]
+alloy.workspace = true
 clap = { workspace = true, features = ["derive"] }
 eyre.workspace = true
 heimdall-decompiler.workspace = true
